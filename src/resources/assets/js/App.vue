@@ -19,13 +19,13 @@
           <svg>
             <use xlink:href="/vendor/muller/filemanager/img/symbols.svg#sprite-folder"></use>
           </svg>
-          <b-form-checkbox value="orange">Orange OrangeOrange Orange Orange</b-form-checkbox>
+          <b-form-checkbox value="orange">{{ item.name }}</b-form-checkbox>
         </div>
         <div v-if="item.type === 'file'" class="file item">
           <svg>
             <use xlink:href="/vendor/muller/filemanager/img/symbols.svg#sprite-file"></use>
           </svg>
-          <b-form-checkbox value="orange">Orange</b-form-checkbox>
+          <b-form-checkbox value="orange">{{ item.name }}</b-form-checkbox>
         </div>
       </b-col>
     </b-row>

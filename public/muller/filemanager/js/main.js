@@ -21611,7 +21611,7 @@ var render = function() {
                       ]),
                       _vm._v(" "),
                       _c("b-form-checkbox", { attrs: { value: "orange" } }, [
-                        _vm._v("Orange OrangeOrange Orange Orange")
+                        _vm._v(_vm._s(item.name))
                       ])
                     ],
                     1
@@ -21633,7 +21633,7 @@ var render = function() {
                       ]),
                       _vm._v(" "),
                       _c("b-form-checkbox", { attrs: { value: "orange" } }, [
-                        _vm._v("Orange")
+                        _vm._v(_vm._s(item.name))
                       ])
                     ],
                     1
