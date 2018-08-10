@@ -1,0 +1,6 @@
+/vendor/
+/temp/
+/.idea/
+todo
+/node_modules/
+*.lock

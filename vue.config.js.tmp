@@ -1,0 +1,13 @@
+module.exports = {
+  outputDir: './public/muller/filemanager',
+  configureWebpack: {
+    resolve: {
+      alias: {
+        '@': __dirname + '/src/resources/assets/js'
+      }
+    },
+    entry: {
+      app: './src/resources/assets/js/main.js'
+    }
+  }
+}

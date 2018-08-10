@@ -1,0 +1,27 @@
+{
+  "name": "muller/filemanager",
+  "description": "Simple Laravel File Manager",
+  "authors": [
+    {
+      "name": "Alex Muller",
+      "email": "mullerbox@gmail.com"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Muller\\Filemanager\\": "src/"
+    }
+  },
+  "require": {
+    "illuminate/support": "^5.6",
+    "illuminate/pagination": "^5.6",
+    "illuminate/http": "^5.6"
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "Muller\\Filemanager\\FMServiceProvider"
+      ]
+    }
+  }
+}
