@@ -1,5 +1,9 @@
 <template>
   <b-container>
+    <!--Progress-->
+    <div v-if="upload.active" class="progressBar">
+      <b-progress :value="upload.current" :max="upload.total" show-progress animated></b-progress>
+    </div>
     <!--Header-->
     <b-row>
       <b-col>
@@ -31,7 +35,7 @@
             <use xlink:href="/vendor/muller/filemanager/img/symbols.svg#sprite-refresh"></use>
           </svg>
         </b-button>
-        <b-button size="sm" variant="outline-success">
+        <b-button @click="$refs.files.click()" size="sm" variant="outline-success">
           <svg class="success">
             <use xlink:href="/vendor/muller/filemanager/img/symbols.svg#sprite-upload"></use>
           </svg>
@@ -105,6 +109,7 @@
       title="Delete selected items">
       <p class="my-4">Are you sure you want to remove selected items?</p>
     </b-modal>
+    <input style="display: none" @change="processFiles" ref="files" type="file" multiple>
   </b-container>
 </template>
 <script>
@@ -112,12 +117,18 @@ import axios from 'axios'
 export default {
   data () {
     return {
+      upload: {
+        active: false,
+        current: 0,
+        total: 100
+      },
       items: [],
       numberOfPages: 1,
       currentPage: 1,
       path: window.localStorage.getItem('slfm-path') ? window.localStorage.getItem('slfm-path') : '',
       newFolderName: '',
-      selection: []
+      selection: [],
+      files: []
     }
   },
   created () {
@@ -151,6 +162,29 @@ export default {
     }
   },
   methods: {
+    processFiles () {
+      let files = this.$refs.files.files
+      if(files.length) {
+        let data = new FormData()
+        for( var i = 0; i < files.length; i++ ){
+          let file = files[i];
+          data.append('files[' + i + ']', file);
+        }
+        data.append('path', this.path)
+        let vue = this
+        let config = {
+          onUploadProgress (progressEvent) {
+            vue.upload.active = true
+            vue.upload.total = progressEvent.total
+            vue.upload.current = progressEvent.loaded
+          }
+        };
+        axios.post('slfm/upload', data, config)
+          .then(() => {
+            this.upload.active = false
+          })
+      }
+    },
     deleteItems () {
       axios.post('slfm/delete', {items: this.selection})
         .then(() => {
@@ -216,6 +250,22 @@ export default {
 }
 </script>
 <style>
+  .progressBar {
+    display: flex;
+    justify-content: center;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    flex-wrap: nowrap;
+    left: 0;
+    background-color: rgba(255, 255, 255, 0.8);
+    z-index: 2;
+  }
+  .progressBar .progress {
+    align-self: center;
+    width: 80%
+  }
   .breadcrumb {
     padding: 5px;
     font-size: 14px;
@@ -259,7 +309,6 @@ export default {
     cursor: pointer;
     overflow: hidden;
     font-size: 13px;
-    margin: 0 5px;
     max-height: 150px;
     text-align: center;
   }

@@ -35,4 +35,8 @@ class FileController
         $manager->delete($request->post('items'));
 
     }
+    public function upload(Request $request)
+    {
+        dd($request->all());
+    }
 }
