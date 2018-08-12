@@ -3,6 +3,7 @@
 
 namespace Muller\Filemanager;
 
+use Illuminate\Filesystem\FilesystemManager;
 use \Muller\Filemanager\Contracts\File;
 
 class Folder extends AbstractFile implements File 
@@ -13,10 +14,4 @@ class Folder extends AbstractFile implements File
         $this->type = 'folder';
     }
 
-    public static function getItems($path) : array
-    {
-        $items = static::makeItems($path, 'folder');
-
-        return $items;
-    }
 }

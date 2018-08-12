@@ -11,12 +11,12 @@ var slfm = new function () {
       win.focus();
       return;
     }
-    win = window.open('/slfm', '', 'width=600,height=400,menubar=0,location=0')
+    win = window.open('/slfm', '', 'width=900,height=600,menubar=0,location=0')
     win.onload = function () {
-      delegateEvent('click', win.document.body, '.file', function (file){
-        input.value = 'test'
+      win.callback = function(path){
+        input.value = path
         win.close()
-      })
+      }
     }
   }
 

@@ -1480,19 +1480,42 @@ var isOldIE = memoize(function () {
 	return window && document && document.all && !window.atob;
 });
 
+var getTarget = function (target, parent) {
+  if (parent){
+    return parent.querySelector(target);
+  }
+  return document.querySelector(target);
+};
+
 var getElement = (function (fn) {
 	var memo = {};
 
-	return function(selector) {
-		if (typeof memo[selector] === "undefined") {
-			memo[selector] = fn.call(this, selector);
+	return function(target, parent) {
+                // If passing function in options, then use it for resolve "head" element.
+                // Useful for Shadow Root style i.e
+                // {
+                //   insertInto: function () { return document.querySelector("#foo").shadowRoot }
+                // }
+                if (typeof target === 'function') {
+                        return target();
+                }
+                if (typeof memo[target] === "undefined") {
+			var styleTarget = getTarget.call(this, target, parent);
+			// Special case to return head of iframe instead of iframe itself
+			if (window.HTMLIFrameElement && styleTarget instanceof window.HTMLIFrameElement) {
+				try {
+					// This will throw an exception if access to iframe is blocked
+					// due to cross-origin restrictions
+					styleTarget = styleTarget.contentDocument.head;
+				} catch(e) {
+					styleTarget = null;
+				}
+			}
+			memo[target] = styleTarget;
 		}
-
-		return memo[selector]
+		return memo[target]
 	};
-})(function (target) {
-	return document.querySelector(target)
-});
+})();
 
 var singleton = null;
 var	singletonCounter = 0;
@@ -1511,10 +1534,10 @@ module.exports = function(list, options) {
 
 	// Force single-tag solution on IE6-9, which has a hard limit on the # of <style>
 	// tags it will allow on a page
-	if (!options.singleton) options.singleton = isOldIE();
+	if (!options.singleton && typeof options.singleton !== "boolean") options.singleton = isOldIE();
 
 	// By default, add <style> tags to the <head> element
-	if (!options.insertInto) options.insertInto = "head";
+        if (!options.insertInto) options.insertInto = "head";
 
 	// By default, add <style> tags to the bottom of the target
 	if (!options.insertAt) options.insertAt = "bottom";
@@ -1617,8 +1640,11 @@ function insertStyleElement (options, style) {
 		stylesInsertedAtTop.push(style);
 	} else if (options.insertAt === "bottom") {
 		target.appendChild(style);
+	} else if (typeof options.insertAt === "object" && options.insertAt.before) {
+		var nextSibling = getElement(options.insertAt.before, target);
+		target.insertBefore(style, nextSibling);
 	} else {
-		throw new Error("Invalid value for parameter 'insertAt'. Must be 'top' or 'bottom'.");
+		throw new Error("[Style Loader]\n\n Invalid value for parameter 'insertAt' ('options.insertAt') found.\n Must be 'top', 'bottom', or Object.\n (https://github.com/webpack-contrib/style-loader#insertat)\n");
 	}
 }
 
@@ -1635,7 +1661,16 @@ function removeStyleElement (style) {
 function createStyleElement (options) {
 	var style = document.createElement("style");
 
-	options.attrs.type = "text/css";
+	if(options.attrs.type === undefined) {
+		options.attrs.type = "text/css";
+	}
+
+	if(options.attrs.nonce === undefined) {
+		var nonce = getNonce();
+		if (nonce) {
+			options.attrs.nonce = nonce;
+		}
+	}
 
 	addAttrs(style, options.attrs);
 	insertStyleElement(options, style);
@@ -1646,7 +1681,9 @@ function createStyleElement (options) {
 function createLinkElement (options) {
 	var link = document.createElement("link");
 
-	options.attrs.type = "text/css";
+	if(options.attrs.type === undefined) {
+		options.attrs.type = "text/css";
+	}
 	options.attrs.rel = "stylesheet";
 
 	addAttrs(link, options.attrs);
@@ -1659,6 +1696,14 @@ function addAttrs (el, attrs) {
 	Object.keys(attrs).forEach(function (key) {
 		el.setAttribute(key, attrs[key]);
 	});
+}
+
+function getNonce() {
+	if (false) {
+		return null;
+	}
+
+	return __webpack_require__.nc;
 }
 
 function addStyle (obj, options) {
@@ -21091,7 +21136,7 @@ exports = module.exports = __webpack_require__(11)(false);
 
 
 // module
-exports.push([module.i, "\n.folder{\n  fill: #1c9ac5;\n}\n.folder:hover {\n  fill: #16688a;\n}\n.file{\n  fill: #7f92a8;\n}\n.file:hover{\n  fill: #4b6f85;\n}\n.item {\n  cursor: pointer;\n  overflow: hidden;\n  font-size: 13px;\n  margin: 0 5px;\n}\n.item svg{\n  width: 100%;\n  max-width: 120px;\n  height: 120px;\n}\n\n\n", ""]);
+exports.push([module.i, "\n.breadcrumb {\n  padding: 5px;\n  font-size: 14px;\n}\n.button-set .btn{\n  padding: 3px;\n  font-size: 0;\n}\n.btn svg {\n  height: 20px;\n  width: 20px;\n}\nsvg.primary {\n  fill: #007bff;\n}\nsvg.secondary {\n  fill: #6c757d;\n}\nsvg.success {\n  fill: #28a745\n}\nsvg.danger {\n  fill: #dc3545;\n}\n.btn:hover svg {\n  fill: #fff;\n}\n.folder{\n  fill: #1c9ac5;\n}\n.folder:hover {\n  fill: #16688a;\n}\n.file{\n  fill: #7f92a8;\n}\n.file:hover{\n  fill: #4b6f85;\n}\n.item {\n  cursor: pointer;\n  overflow: hidden;\n  font-size: 13px;\n  margin: 0 5px;\n  max-height: 150px;\n  text-align: center;\n}\n.item svg{\n  width: 50%;\n  max-height: 80px;\n}\na:not([href]):not([tabindex]){\n  color: inherit;\n}\n\n\n", ""]);
 
 // exports
 
@@ -21472,6 +21517,8 @@ module.exports = function normalizeComponent (
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_axios__ = __webpack_require__(203);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_axios___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_axios__);
 //
 //
 //
@@ -21505,37 +21552,186 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
 
 /* harmony default export */ __webpack_exports__["default"] = ({
   data: function data() {
     return {
       items: [],
       numberOfPages: 1,
-      currentPage: 1
+      currentPage: 1,
+      path: window.localStorage.getItem('slfm-path') ? window.localStorage.getItem('slfm-path') : '',
+      newFolderName: '',
+      selection: []
     };
   },
   created: function created() {
-    this.getItems(1);
+    this.getItems(1, this.path);
   },
 
+  computed: {
+    breadcrumbs: function breadcrumbs() {
+      var _breadcrumbs = this.path.split('/');
+      var path = '';
+      var breadcrumbs = [{
+        name: 'Home',
+        path: path,
+        active: false
+      }];
+      _breadcrumbs.forEach(function (item) {
+        if (item) {
+          path = path + '/' + item;
+          breadcrumbs.push({
+            name: item,
+            path: path,
+            active: false
+          });
+        }
+      });
+      breadcrumbs[breadcrumbs.length - 1].active = true;
+      return breadcrumbs;
+    }
+  },
   methods: {
-    getItems: function getItems(page) {
+    deleteItems: function deleteItems() {
       var _this = this;
 
-      this.axios.get('slfm/files', {
+      __WEBPACK_IMPORTED_MODULE_0_axios___default.a.post('slfm/delete', { items: this.selection }).then(function () {
+        _this.refresh();
+      });
+    },
+    showDeleteModal: function showDeleteModal() {
+      if (this.selection.length) {
+        this.$refs.modal.show();
+      }
+    },
+    createFolder: function createFolder() {
+      var _this2 = this;
+
+      if (this.newFolderName) {
+        __WEBPACK_IMPORTED_MODULE_0_axios___default.a.put('slfm/folder', { name: this.newFolderName, path: this.path }).then(function () {
+          _this2.refresh();
+          _this2.$refs.createFolderPopover.$emit('close');
+          _this2.newFolderName = '';
+        });
+      }
+    },
+    refresh: function refresh() {
+      if (this.currentPage > 1) {
+        this.currentPage = 1;
+      } else {
+        this.getItems(1, this.path);
+      }
+      this.selection = [];
+    },
+    getItems: function getItems(page, path) {
+      var _this3 = this;
+
+      __WEBPACK_IMPORTED_MODULE_0_axios___default.a.get('slfm/files', {
         params: {
-          page: page
+          page: page,
+          path: path
         }
       }).then(function (res) {
-        _this.items = res.data.data;
-        _this.numberOfPages = res.data.last_page;
+        _this3.items = res.data.data;
+        _this3.numberOfPages = res.data.last_page;
       });
+    },
+    selectFile: function selectFile(path, name) {
+      path = path ? path + '/' + name : name;
+      window.callback(path);
+    },
+    openFolder: function openFolder(name) {
+      this.path = this.path ? this.path + '/' + name : name;
+    },
+    changePath: function changePath(path) {
+      this.path = path;
     },
     linkGen: function linkGen(pageNum) {}
   },
   watch: {
     currentPage: function currentPage(page) {
-      this.getItems(page);
+      this.getItems(page, this.path);
+    },
+    path: function path(_path) {
+      window.localStorage.setItem('slfm-path', _path);
+      this.getItems(1, _path);
     }
   }
 });
@@ -21553,9 +21749,299 @@ var render = function() {
     [
       _c(
         "b-row",
-        [_c("b-col", [_c("p", [_vm._v("Simple Laravel File Manager")])])],
+        [
+          _c("b-col", [
+            _c("h5", { staticClass: "text-center" }, [
+              _vm._v("Simple Laravel File Manager")
+            ])
+          ])
+        ],
         1
       ),
+      _vm._v(" "),
+      _c("nav", { attrs: { "aria-label": "breadcrumb" } }, [
+        _c(
+          "ol",
+          { staticClass: "breadcrumb" },
+          _vm._l(_vm.breadcrumbs, function(breadcrumb) {
+            return _c(
+              "li",
+              {
+                key: breadcrumb.path,
+                staticClass: "breadcrumb-item",
+                class: { active: breadcrumb.active }
+              },
+              [
+                breadcrumb.active
+                  ? _c("span", [_vm._v(_vm._s(breadcrumb.name))])
+                  : _c(
+                      "a",
+                      {
+                        attrs: { href: "#" },
+                        on: {
+                          click: function($event) {
+                            $event.preventDefault()
+                            _vm.changePath(breadcrumb.path)
+                          }
+                        }
+                      },
+                      [_vm._v(_vm._s(breadcrumb.name))]
+                    )
+              ]
+            )
+          })
+        )
+      ]),
+      _vm._v(" "),
+      _c(
+        "b-row",
+        [
+          _c(
+            "b-col",
+            { staticClass: "button-set", attrs: { sm: "4" } },
+            [
+              _c(
+                "b-button",
+                {
+                  attrs: {
+                    id: "new-folder",
+                    size: "sm",
+                    variant: "outline-secondary"
+                  }
+                },
+                [
+                  _c("svg", { staticClass: "secondary" }, [
+                    _c("use", {
+                      attrs: {
+                        "xlink:href":
+                          "/vendor/muller/filemanager/img/symbols.svg#sprite-newfolder"
+                      }
+                    })
+                  ])
+                ]
+              ),
+              _vm._v(" "),
+              _c(
+                "b-button",
+                {
+                  attrs: { size: "sm", variant: "outline-primary" },
+                  on: { click: _vm.refresh }
+                },
+                [
+                  _c("svg", { staticClass: "primary" }, [
+                    _c("use", {
+                      attrs: {
+                        "xlink:href":
+                          "/vendor/muller/filemanager/img/symbols.svg#sprite-refresh"
+                      }
+                    })
+                  ])
+                ]
+              ),
+              _vm._v(" "),
+              _c(
+                "b-button",
+                { attrs: { size: "sm", variant: "outline-success" } },
+                [
+                  _c("svg", { staticClass: "success" }, [
+                    _c("use", {
+                      attrs: {
+                        "xlink:href":
+                          "/vendor/muller/filemanager/img/symbols.svg#sprite-upload"
+                      }
+                    })
+                  ])
+                ]
+              ),
+              _vm._v(" "),
+              _c(
+                "b-button",
+                {
+                  attrs: { size: "sm", variant: "outline-danger" },
+                  on: { click: _vm.showDeleteModal }
+                },
+                [
+                  _c("svg", { staticClass: "danger" }, [
+                    _c("use", {
+                      attrs: {
+                        "xlink:href":
+                          "/vendor/muller/filemanager/img/symbols.svg#sprite-trash"
+                      }
+                    })
+                  ])
+                ]
+              ),
+              _vm._v(" "),
+              _c(
+                "b-popover",
+                {
+                  ref: "createFolderPopover",
+                  attrs: {
+                    target: "new-folder",
+                    placement: "bottomright",
+                    title: "Create New Folder",
+                    triggers: "click",
+                    content: "Test"
+                  }
+                },
+                [
+                  _c(
+                    "div",
+                    [
+                      _c(
+                        "b-input-group",
+                        { attrs: { size: "sm" } },
+                        [
+                          _c("b-form-input", {
+                            model: {
+                              value: _vm.newFolderName,
+                              callback: function($$v) {
+                                _vm.newFolderName = $$v
+                              },
+                              expression: "newFolderName"
+                            }
+                          }),
+                          _vm._v(" "),
+                          _c(
+                            "b-input-group-append",
+                            [
+                              _c(
+                                "b-btn",
+                                {
+                                  attrs: { variant: "info" },
+                                  on: { click: _vm.createFolder }
+                                },
+                                [_vm._v("Create")]
+                              )
+                            ],
+                            1
+                          )
+                        ],
+                        1
+                      )
+                    ],
+                    1
+                  )
+                ]
+              )
+            ],
+            1
+          ),
+          _vm._v(" "),
+          _c(
+            "b-col",
+            { attrs: { sm: "8" } },
+            [
+              _c(
+                "b-input-group",
+                { attrs: { size: "sm", prepend: "Serch" } },
+                [
+                  _c("b-form-input"),
+                  _vm._v(" "),
+                  _c(
+                    "b-input-group-append",
+                    [
+                      _c("b-btn", { attrs: { variant: "info" } }, [
+                        _vm._v("Go")
+                      ])
+                    ],
+                    1
+                  )
+                ],
+                1
+              )
+            ],
+            1
+          )
+        ],
+        1
+      ),
+      _vm._v(" "),
+      _c(
+        "b-row",
+        _vm._l(_vm.items, function(item) {
+          return _c(
+            "b-col",
+            {
+              key: item.name + "-" + item.type,
+              staticClass: "item",
+              attrs: { cols: "6", sm: "3", md: "2" }
+            },
+            [
+              item.type === "folder"
+                ? _c(
+                    "div",
+                    {
+                      staticClass: "folder",
+                      on: {
+                        click: function($event) {
+                          _vm.openFolder(item.name)
+                        }
+                      }
+                    },
+                    [
+                      _c("svg", [
+                        _c("use", {
+                          attrs: {
+                            "xlink:href":
+                              "/vendor/muller/filemanager/img/symbols.svg#sprite-folder"
+                          }
+                        })
+                      ])
+                    ]
+                  )
+                : _vm._e(),
+              _vm._v(" "),
+              item.type === "file"
+                ? _c(
+                    "div",
+                    {
+                      staticClass: "file",
+                      on: {
+                        click: function($event) {
+                          _vm.selectFile(item.path, item.name)
+                        }
+                      }
+                    },
+                    [
+                      _c("svg", [
+                        _c("use", {
+                          attrs: {
+                            "xlink:href":
+                              "/vendor/muller/filemanager/img/symbols.svg#sprite-file"
+                          }
+                        })
+                      ])
+                    ]
+                  )
+                : _vm._e(),
+              _vm._v(" "),
+              _c(
+                "b-form-checkbox",
+                {
+                  attrs: { value: item },
+                  on: {
+                    click: function($event) {
+                      $event.stopPropagation()
+                    }
+                  },
+                  model: {
+                    value: _vm.selection,
+                    callback: function($$v) {
+                      _vm.selection = $$v
+                    },
+                    expression: "selection"
+                  }
+                },
+                [_vm._v(_vm._s(item.name))]
+              )
+            ],
+            1
+          )
+        })
+      ),
+      _vm._v(" "),
+      _c("br"),
       _vm._v(" "),
       _c(
         "b-row",
@@ -21587,61 +22073,24 @@ var render = function() {
       ),
       _vm._v(" "),
       _c(
-        "b-row",
-        _vm._l(_vm.items, function(item) {
-          return _c(
-            "b-col",
-            {
-              key: item.name + "-" + item.type,
-              attrs: { cols: "6", sm: "3", md: "2" }
-            },
-            [
-              item.type === "folder"
-                ? _c(
-                    "div",
-                    { staticClass: "folder item" },
-                    [
-                      _c("svg", [
-                        _c("use", {
-                          attrs: {
-                            "xlink:href":
-                              "/vendor/muller/filemanager/img/symbols.svg#sprite-folder"
-                          }
-                        })
-                      ]),
-                      _vm._v(" "),
-                      _c("b-form-checkbox", { attrs: { value: "orange" } }, [
-                        _vm._v(_vm._s(item.name))
-                      ])
-                    ],
-                    1
-                  )
-                : _vm._e(),
-              _vm._v(" "),
-              item.type === "file"
-                ? _c(
-                    "div",
-                    { staticClass: "file item" },
-                    [
-                      _c("svg", [
-                        _c("use", {
-                          attrs: {
-                            "xlink:href":
-                              "/vendor/muller/filemanager/img/symbols.svg#sprite-file"
-                          }
-                        })
-                      ]),
-                      _vm._v(" "),
-                      _c("b-form-checkbox", { attrs: { value: "orange" } }, [
-                        _vm._v(_vm._s(item.name))
-                      ])
-                    ],
-                    1
-                  )
-                : _vm._e()
-            ]
-          )
-        })
+        "b-modal",
+        {
+          ref: "modal",
+          attrs: {
+            size: "sm",
+            "header-bg-variant": "danger",
+            "header-text-variant": "light",
+            "ok-variant": "danger",
+            centered: "",
+            title: "Delete selected items"
+          },
+          on: { ok: _vm.deleteItems }
+        },
+        [
+          _c("p", { staticClass: "my-4" }, [
+            _vm._v("Are you sure you want to remove selected items?")
+          ])
+        ]
       )
     ],
     1
@@ -21968,30 +22417,49 @@ Object(__WEBPACK_IMPORTED_MODULE_1__utils_plugins__["c" /* vueUse */])(VuePlugin
 /* 89 */
 /***/ (function(module, exports, __webpack_require__) {
 
-// style-loader: Adds some css to the DOM by adding a <style> tag
 
-// load the styles
 var content = __webpack_require__(90);
-if(typeof content === 'string') content = [[module.i, content, '']];
-// Prepare cssTransformation
-var transform;
 
-var options = {}
+if(typeof content === 'string') content = [[module.i, content, '']];
+
+var transform;
+var insertInto;
+
+
+
+var options = {"hmr":true}
+
 options.transform = transform
-// add the styles to the DOM
+options.insertInto = undefined;
+
 var update = __webpack_require__(14)(content, options);
+
 if(content.locals) module.exports = content.locals;
-// Hot Module Replacement
+
 if(false) {
-	// When the styles change, update the <style> tags
-	if(!content.locals) {
-		module.hot.accept("!!../../../../css-loader/index.js!./alert.css", function() {
-			var newContent = require("!!../../../../css-loader/index.js!./alert.css");
-			if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
-			update(newContent);
-		});
-	}
-	// When the module is disposed, remove the <style> tags
+	module.hot.accept("!!../../../../css-loader/index.js!./alert.css", function() {
+		var newContent = require("!!../../../../css-loader/index.js!./alert.css");
+
+		if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+
+		var locals = (function(a, b) {
+			var key, idx = 0;
+
+			for(key in a) {
+				if(!b || a[key] !== b[key]) return false;
+				idx++;
+			}
+
+			for(key in b) idx--;
+
+			return idx === 0;
+		}(content.locals, newContent.locals));
+
+		if(!locals) throw new Error('Aborting CSS HMR due to changed css-modules locals.');
+
+		update(newContent);
+	});
+
 	module.hot.dispose(function() { update(); });
 }
 
@@ -22077,7 +22545,7 @@ module.exports = function (css) {
 			.replace(/^'(.*)'$/, function(o, $1){ return $1; });
 
 		// already a full url? no change
-		if (/^(#|data:|http:\/\/|https:\/\/|file:\/\/\/)/i.test(unquotedOrigUrl)) {
+		if (/^(#|data:|http:\/\/|https:\/\/|file:\/\/\/|\s*$)/i.test(unquotedOrigUrl)) {
 		  return fullMatch;
 		}
 
@@ -24197,30 +24665,49 @@ var EVENT_STATE = 'bv::collapse::state';
 /* 120 */
 /***/ (function(module, exports, __webpack_require__) {
 
-// style-loader: Adds some css to the DOM by adding a <style> tag
 
-// load the styles
 var content = __webpack_require__(121);
-if(typeof content === 'string') content = [[module.i, content, '']];
-// Prepare cssTransformation
-var transform;
 
-var options = {}
+if(typeof content === 'string') content = [[module.i, content, '']];
+
+var transform;
+var insertInto;
+
+
+
+var options = {"hmr":true}
+
 options.transform = transform
-// add the styles to the DOM
+options.insertInto = undefined;
+
 var update = __webpack_require__(14)(content, options);
+
 if(content.locals) module.exports = content.locals;
-// Hot Module Replacement
+
 if(false) {
-	// When the styles change, update the <style> tags
-	if(!content.locals) {
-		module.hot.accept("!!../../../../css-loader/index.js!./dropdown.css", function() {
-			var newContent = require("!!../../../../css-loader/index.js!./dropdown.css");
-			if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
-			update(newContent);
-		});
-	}
-	// When the module is disposed, remove the <style> tags
+	module.hot.accept("!!../../../../css-loader/index.js!./dropdown.css", function() {
+		var newContent = require("!!../../../../css-loader/index.js!./dropdown.css");
+
+		if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+
+		var locals = (function(a, b) {
+			var key, idx = 0;
+
+			for(key in a) {
+				if(!b || a[key] !== b[key]) return false;
+				idx++;
+			}
+
+			for(key in b) idx--;
+
+			return idx === 0;
+		}(content.locals, newContent.locals));
+
+		if(!locals) throw new Error('Aborting CSS HMR due to changed css-modules locals.');
+
+		update(newContent);
+	});
+
 	module.hot.dispose(function() { update(); });
 }
 
@@ -25308,30 +25795,49 @@ var TYPES = ['text', 'password', 'email', 'number', 'url', 'tel', 'search', 'ran
 /* 138 */
 /***/ (function(module, exports, __webpack_require__) {
 
-// style-loader: Adds some css to the DOM by adding a <style> tag
 
-// load the styles
 var content = __webpack_require__(139);
-if(typeof content === 'string') content = [[module.i, content, '']];
-// Prepare cssTransformation
-var transform;
 
-var options = {}
+if(typeof content === 'string') content = [[module.i, content, '']];
+
+var transform;
+var insertInto;
+
+
+
+var options = {"hmr":true}
+
 options.transform = transform
-// add the styles to the DOM
+options.insertInto = undefined;
+
 var update = __webpack_require__(14)(content, options);
+
 if(content.locals) module.exports = content.locals;
-// Hot Module Replacement
+
 if(false) {
-	// When the styles change, update the <style> tags
-	if(!content.locals) {
-		module.hot.accept("!!../../../../css-loader/index.js!./form-input.css", function() {
-			var newContent = require("!!../../../../css-loader/index.js!./form-input.css");
-			if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
-			update(newContent);
-		});
-	}
-	// When the module is disposed, remove the <style> tags
+	module.hot.accept("!!../../../../css-loader/index.js!./form-input.css", function() {
+		var newContent = require("!!../../../../css-loader/index.js!./form-input.css");
+
+		if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+
+		var locals = (function(a, b) {
+			var key, idx = 0;
+
+			for(key in a) {
+				if(!b || a[key] !== b[key]) return false;
+				idx++;
+			}
+
+			for(key in b) idx--;
+
+			return idx === 0;
+		}(content.locals, newContent.locals));
+
+		if(!locals) throw new Error('Aborting CSS HMR due to changed css-modules locals.');
+
+		update(newContent);
+	});
+
 	module.hot.dispose(function() { update(); });
 }
 
@@ -30796,30 +31302,49 @@ function stableSort(array, compareFn) {
 /* 184 */
 /***/ (function(module, exports, __webpack_require__) {
 
-// style-loader: Adds some css to the DOM by adding a <style> tag
 
-// load the styles
 var content = __webpack_require__(185);
-if(typeof content === 'string') content = [[module.i, content, '']];
-// Prepare cssTransformation
-var transform;
 
-var options = {}
+if(typeof content === 'string') content = [[module.i, content, '']];
+
+var transform;
+var insertInto;
+
+
+
+var options = {"hmr":true}
+
 options.transform = transform
-// add the styles to the DOM
+options.insertInto = undefined;
+
 var update = __webpack_require__(14)(content, options);
+
 if(content.locals) module.exports = content.locals;
-// Hot Module Replacement
+
 if(false) {
-	// When the styles change, update the <style> tags
-	if(!content.locals) {
-		module.hot.accept("!!../../../../css-loader/index.js!./table.css", function() {
-			var newContent = require("!!../../../../css-loader/index.js!./table.css");
-			if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
-			update(newContent);
-		});
-	}
-	// When the module is disposed, remove the <style> tags
+	module.hot.accept("!!../../../../css-loader/index.js!./table.css", function() {
+		var newContent = require("!!../../../../css-loader/index.js!./table.css");
+
+		if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+
+		var locals = (function(a, b) {
+			var key, idx = 0;
+
+			for(key in a) {
+				if(!b || a[key] !== b[key]) return false;
+				idx++;
+			}
+
+			for(key in b) idx--;
+
+			return idx === 0;
+		}(content.locals, newContent.locals));
+
+		if(!locals) throw new Error('Aborting CSS HMR due to changed css-modules locals.');
+
+		update(newContent);
+	});
+
 	module.hot.dispose(function() { update(); });
 }
 
@@ -32501,30 +33026,49 @@ function removeBVPO(el) {
 /* 199 */
 /***/ (function(module, exports, __webpack_require__) {
 
-// style-loader: Adds some css to the DOM by adding a <style> tag
 
-// load the styles
 var content = __webpack_require__(200);
-if(typeof content === 'string') content = [[module.i, content, '']];
-// Prepare cssTransformation
-var transform;
 
-var options = {}
+if(typeof content === 'string') content = [[module.i, content, '']];
+
+var transform;
+var insertInto;
+
+
+
+var options = {"hmr":true}
+
 options.transform = transform
-// add the styles to the DOM
+options.insertInto = undefined;
+
 var update = __webpack_require__(14)(content, options);
+
 if(content.locals) module.exports = content.locals;
-// Hot Module Replacement
+
 if(false) {
-	// When the styles change, update the <style> tags
-	if(!content.locals) {
-		module.hot.accept("!!../../../css-loader/index.js!./bootstrap.css", function() {
-			var newContent = require("!!../../../css-loader/index.js!./bootstrap.css");
-			if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
-			update(newContent);
-		});
-	}
-	// When the module is disposed, remove the <style> tags
+	module.hot.accept("!!../../../css-loader/index.js!./bootstrap.css", function() {
+		var newContent = require("!!../../../css-loader/index.js!./bootstrap.css");
+
+		if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+
+		var locals = (function(a, b) {
+			var key, idx = 0;
+
+			for(key in a) {
+				if(!b || a[key] !== b[key]) return false;
+				idx++;
+			}
+
+			for(key in b) idx--;
+
+			return idx === 0;
+		}(content.locals, newContent.locals));
+
+		if(!locals) throw new Error('Aborting CSS HMR due to changed css-modules locals.');
+
+		update(newContent);
+	});
+
 	module.hot.dispose(function() { update(); });
 }
 
@@ -32546,30 +33090,49 @@ exports.push([module.i, "/*!\n * Bootstrap v4.1.3 (https://getbootstrap.com/)\n 
 /* 201 */
 /***/ (function(module, exports, __webpack_require__) {
 
-// style-loader: Adds some css to the DOM by adding a <style> tag
 
-// load the styles
 var content = __webpack_require__(202);
-if(typeof content === 'string') content = [[module.i, content, '']];
-// Prepare cssTransformation
-var transform;
 
-var options = {}
+if(typeof content === 'string') content = [[module.i, content, '']];
+
+var transform;
+var insertInto;
+
+
+
+var options = {"hmr":true}
+
 options.transform = transform
-// add the styles to the DOM
+options.insertInto = undefined;
+
 var update = __webpack_require__(14)(content, options);
+
 if(content.locals) module.exports = content.locals;
-// Hot Module Replacement
+
 if(false) {
-	// When the styles change, update the <style> tags
-	if(!content.locals) {
-		module.hot.accept("!!../../css-loader/index.js!./bootstrap-vue.css", function() {
-			var newContent = require("!!../../css-loader/index.js!./bootstrap-vue.css");
-			if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
-			update(newContent);
-		});
-	}
-	// When the module is disposed, remove the <style> tags
+	module.hot.accept("!!../../css-loader/index.js!./bootstrap-vue.css", function() {
+		var newContent = require("!!../../css-loader/index.js!./bootstrap-vue.css");
+
+		if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
+
+		var locals = (function(a, b) {
+			var key, idx = 0;
+
+			for(key in a) {
+				if(!b || a[key] !== b[key]) return false;
+				idx++;
+			}
+
+			for(key in b) idx--;
+
+			return idx === 0;
+		}(content.locals, newContent.locals));
+
+		if(!locals) throw new Error('Aborting CSS HMR due to changed css-modules locals.');
+
+		update(newContent);
+	});
+
 	module.hot.dispose(function() { update(); });
 }
 

@@ -17,7 +17,6 @@ abstract class AbstractFile implements FileContract
     {
         $this->name = $this->getName($name);
         $this->path = $path;
-        $this->type = 'file';
     }
 
     protected function getName($name)
@@ -26,15 +25,5 @@ abstract class AbstractFile implements FileContract
         return array_pop($name);
     }
 
-    protected static function makeItems($path, $type)
-    {
-        $items = [];
-        $storage = app('filesystem');
-        $_items = $type === 'file' ? $storage->files($path) : $storage->directories($path);
-        foreach ($_items as $_item) {
-            $items[] = new static($_item, $path);
-        }
 
-        return $items;
-    }
 }

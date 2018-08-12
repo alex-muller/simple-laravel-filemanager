@@ -10,6 +10,7 @@
 </head>
 <body>
 <div id="app">
+  <svg style="display: none"><use xlink:href="/vendor/muller/filemanager/img/symbols.svg#sprite-file"></use></svg>
     <app></app>
 </div>
 <script src="/vendor/muller/filemanager/js/main.js"></script>

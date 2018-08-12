@@ -15,10 +15,4 @@ class File extends AbstractFile implements FileContract
         $this->type = 'file';
     }
 
-    public static function getItems($path) : array
-    {
-        $items = static::makeItems($path, 'file');
-
-        return $items;
-    }
 }
