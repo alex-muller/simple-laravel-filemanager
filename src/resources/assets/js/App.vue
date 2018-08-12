@@ -182,6 +182,8 @@ export default {
         axios.post('slfm/upload', data, config)
           .then(() => {
             this.upload.active = false
+            this.refresh()
+            this.$refs.files.value = null
           })
       }
     },

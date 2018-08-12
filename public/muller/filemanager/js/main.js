@@ -21707,6 +21707,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         };
         __WEBPACK_IMPORTED_MODULE_0_axios___default.a.post('slfm/upload', data, config).then(function () {
           _this.upload.active = false;
+          _this.refresh();
+          _this.$refs.files.value = null;
         });
       }
     },

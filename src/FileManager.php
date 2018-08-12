@@ -5,6 +5,7 @@ namespace Muller\Filemanager;
 
 
 use Illuminate\Filesystem\FilesystemManager;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 
@@ -45,6 +46,22 @@ class FileManager
         $path = $path ? $path . '/' . $name : $name;
 
         return $this->storage->makeDirectory($path);
+    }
+
+
+    public function upload(array $files, string $path = '')
+    {
+        foreach ($files as $file){
+            /** @var UploadedFile $file */
+            $originalName = $name = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+            $ext = pathinfo($file->getClientOriginalName(), PATHINFO_EXTENSION);
+            $i = 1;
+            while ($this->storage->exists("$path/$name.$ext")){
+                $name = $originalName . "($i)";
+                $i++;
+            }
+            $file->storeAs($path, $name . '.' . $ext);
+        }
     }
 
     public function delete($items)
