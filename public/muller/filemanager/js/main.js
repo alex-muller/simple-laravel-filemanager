@@ -21639,11 +21639,31 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 /* harmony default export */ __webpack_exports__["default"] = ({
   data: function data() {
     return {
+      error: {
+        show: false,
+        message: ''
+      },
       upload: {
         active: false,
         current: 0,
@@ -21709,6 +21729,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
           _this.upload.active = false;
           _this.refresh();
           _this.$refs.files.value = null;
+        }).catch(function (err) {
+          _this.handleError(err);
         });
       }
     },
@@ -21717,6 +21739,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
       __WEBPACK_IMPORTED_MODULE_0_axios___default.a.post('slfm/delete', { items: this.selection }).then(function () {
         _this2.refresh();
+      }).catch(function (err) {
+        _this2.handleError(err);
       });
     },
     showDeleteModal: function showDeleteModal() {
@@ -21732,8 +21756,15 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
           _this3.refresh();
           _this3.$refs.createFolderPopover.$emit('close');
           _this3.newFolderName = '';
+        }).catch(function (err) {
+          _this3.$refs.createFolderPopover.$emit('close');
+          _this3.handleError(err);
         });
       }
+    },
+    handleError: function handleError(err) {
+      this.error.show = true;
+      this.error.message = err.response.data.message;
     },
     refresh: function refresh() {
       if (this.currentPage > 1) {
@@ -21746,7 +21777,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     getItems: function getItems(page, path) {
       var _this4 = this;
 
-      __WEBPACK_IMPORTED_MODULE_0_axios___default.a.get('slfm/files', {
+      return __WEBPACK_IMPORTED_MODULE_0_axios___default.a.get('slfm/files', {
         params: {
           page: page,
           path: path
@@ -21754,6 +21785,8 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
       }).then(function (res) {
         _this4.items = res.data.data;
         _this4.numberOfPages = res.data.last_page;
+      }).catch(function (err) {
+        _this4.handleError(err);
       });
     },
     selectFile: function selectFile(path, name) {
@@ -21761,10 +21794,18 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
       window.callback(path);
     },
     openFolder: function openFolder(name) {
-      this.path = this.path ? this.path + '/' + name : name;
+      var path = this.path ? this.path + '/' + name : name;
+      this.changePath(path);
     },
     changePath: function changePath(path) {
-      this.path = path;
+      var _this5 = this;
+
+      this.getItems(1, path).then(function () {
+        window.localStorage.setItem('slfm-path', path);
+        _this5.path = path;
+      }).catch(function (err) {
+        _this5.handleError(err);
+      });
     },
     linkGen: function linkGen(pageNum) {}
   },
@@ -21772,10 +21813,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     currentPage: function currentPage(page) {
       this.getItems(page, this.path);
     },
-    path: function path(_path) {
-      window.localStorage.setItem('slfm-path', _path);
-      this.getItems(1, _path);
-    }
+    path: function path(_path) {}
   }
 });
 
@@ -23041,6 +23079,30 @@ var render = function() {
             _vm._v("Are you sure you want to remove selected items?")
           ])
         ]
+      ),
+      _vm._v(" "),
+      _c(
+        "b-modal",
+        {
+          attrs: {
+            size: "sm",
+            "header-bg-variant": "danger",
+            "header-text-variant": "light",
+            "ok-variant": "danger",
+            "ok-only": "",
+            "ok-title": "Got it",
+            centered: "",
+            title: "Error"
+          },
+          model: {
+            value: _vm.error.show,
+            callback: function($$v) {
+              _vm.$set(_vm.error, "show", $$v)
+            },
+            expression: "error.show"
+          }
+        },
+        [_c("p", { staticClass: "my-4" }, [_vm._v(_vm._s(_vm.error.message))])]
       ),
       _vm._v(" "),
       _c("input", {

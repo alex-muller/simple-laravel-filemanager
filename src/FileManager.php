@@ -7,6 +7,7 @@ namespace Muller\Filemanager;
 use Illuminate\Filesystem\FilesystemManager;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Muller\Filemanager\Exceptions\FileManagerException;
 
 
 /**
@@ -45,7 +46,12 @@ class FileManager
     {        
         $path = $path ? $path . '/' . $name : $name;
 
-        return $this->storage->makeDirectory($path);
+        if($this->storage->exists($path)) {
+            throw new FileManagerException('Folder exists');
+        }
+
+        $result = $this->storage->makeDirectory($path);
+        return $result;
     }
 
 
@@ -77,7 +83,11 @@ class FileManager
     protected function makeItems($path, $type)
     {
         $items = [];
-        $_items = $type === 'file' ? $this->storage->files($path) : $this->storage->directories($path);
+        try {
+            $_items = $type === 'file' ? $this->storage->files($path) : $this->storage->directories($path);
+        } catch (\Exception $e) {
+            throw new FileManagerException('Can not read files. Check permissions');
+        }
         foreach ($_items as $_item) {
             $items[] = new $this->types[$type]($_item, $path);
         }

@@ -98,7 +98,9 @@
       </b-col>
     </b-row>
 
-    <!--Modal-->
+    <!--Modals-->
+
+    <!--delete-->
     <b-modal
       size="sm"
       header-bg-variant="danger"
@@ -109,6 +111,20 @@
       title="Delete selected items">
       <p class="my-4">Are you sure you want to remove selected items?</p>
     </b-modal>
+
+    <!--error-->
+    <b-modal
+      size="sm"
+      header-bg-variant="danger"
+      header-text-variant="light"
+      ok-variant="danger"
+      ok-only
+      ok-title="Got it"
+      centered
+      v-model="error.show"
+      title="Error">
+      <p class="my-4">{{error.message}}</p>
+    </b-modal>
     <input style="display: none" @change="processFiles" ref="files" type="file" multiple>
   </b-container>
 </template>
@@ -117,6 +133,10 @@ import axios from 'axios'
 export default {
   data () {
     return {
+      error: {
+        show: false,
+        message: ''
+      },
       upload: {
         active: false,
         current: 0,
@@ -184,14 +204,18 @@ export default {
             this.upload.active = false
             this.refresh()
             this.$refs.files.value = null
-          })
+          }).catch(err => {
+            this.handleError(err)
+        })
       }
     },
     deleteItems () {
       axios.post('slfm/delete', {items: this.selection})
         .then(() => {
           this.refresh()
-        })
+        }).catch(err => {
+        this.handleError(err)
+      })
     },
     showDeleteModal () {
       if(this.selection.length) {
@@ -205,8 +229,15 @@ export default {
           this.refresh()
           this.$refs.createFolderPopover.$emit('close')
           this.newFolderName = ''
+        }).catch(err => {
+          this.$refs.createFolderPopover.$emit('close')
+          this.handleError(err)
         })
       }
+    },
+    handleError (err) {
+      this.error.show = true
+      this.error.message = err.response.data.message
     },
     refresh () {
       if (this.currentPage > 1) {
@@ -217,7 +248,7 @@ export default {
       this.selection = []
     },
     getItems (page, path) {
-      axios.get('slfm/files', {
+      return axios.get('slfm/files', {
         params: {
           page: page,
           path: path
@@ -227,16 +258,25 @@ export default {
         this.items = res.data.data
         this.numberOfPages = res.data.last_page
       })
+      .catch(err => {
+        this.handleError(err)
+      })
     },
     selectFile(path, name) {
       path = path ? path + '/' + name : name
       window.callback(path)
     },
     openFolder(name) {
-      this.path = this.path ? this.path + '/' + name : name
+      let path = this.path ? this.path + '/' + name : name
+      this.changePath(path)
     },
     changePath (path) {
-      this.path = path
+      this.getItems(1, path).then(() => {
+        window.localStorage.setItem('slfm-path', path)
+        this.path = path
+      }).catch(err => {
+        this.handleError(err)
+      })
     },
     linkGen(pageNum) {}
   },
@@ -245,8 +285,7 @@ export default {
       this.getItems(page, this.path)
     },
     path (path) {
-      window.localStorage.setItem('slfm-path', path)
-      this.getItems(1, path)
+
     }
   }
 }
