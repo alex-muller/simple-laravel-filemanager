@@ -23,7 +23,8 @@ class FMServiceProvider extends ServiceProvider
     protected function publish()
     {
         $this->publishes([
-            __DIR__.'/../public/' => public_path('vendors')
+            __DIR__.'/../public/' => public_path('vendors'),
+            __DIR__.'/config/slfm.php' => config_path('slfm.php')
         ]);
     }
 

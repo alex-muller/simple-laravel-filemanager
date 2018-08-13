@@ -21142,7 +21142,7 @@ exports = module.exports = __webpack_require__(11)(false);
 
 
 // module
-exports.push([module.i, "\n.progressBar {\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-pack: center;\n      -ms-flex-pack: center;\n          justify-content: center;\n  position: absolute;\n  width: 100%;\n  height: 100%;\n  top: 0;\n  -ms-flex-wrap: nowrap;\n      flex-wrap: nowrap;\n  left: 0;\n  background-color: rgba(255, 255, 255, 0.8);\n  z-index: 2;\n}\n.progressBar .progress {\n  -ms-flex-item-align: center;\n      align-self: center;\n  width: 80%\n}\n.breadcrumb {\n  padding: 5px;\n  font-size: 14px;\n}\n.button-set .btn{\n  padding: 3px;\n  font-size: 0;\n}\n.btn svg {\n  height: 20px;\n  width: 20px;\n}\nsvg.primary {\n  fill: #007bff;\n}\nsvg.secondary {\n  fill: #6c757d;\n}\nsvg.success {\n  fill: #28a745\n}\nsvg.danger {\n  fill: #dc3545;\n}\n.btn:hover svg {\n  fill: #fff;\n}\n.folder{\n  fill: #1c9ac5;\n}\n.folder:hover {\n  fill: #16688a;\n}\n.file{\n  fill: #7f92a8;\n}\n.file:hover{\n  fill: #4b6f85;\n}\n.item {\n  cursor: pointer;\n  overflow: hidden;\n  font-size: 13px;\n  max-height: 150px;\n  text-align: center;\n}\n.item svg{\n  width: 50%;\n  max-height: 80px;\n}\na:not([href]):not([tabindex]){\n  color: inherit;\n}\n\n\n", ""]);
+exports.push([module.i, "\n.progressBar, .cssload-container {\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-pack: center;\n      -ms-flex-pack: center;\n          justify-content: center;\n  position: absolute;\n  width: 100%;\n  height: 100%;\n  top: 0;\n  -ms-flex-wrap: nowrap;\n      flex-wrap: nowrap;\n  left: 0;\n  background-color: rgba(255, 255, 255, 0.8);\n  z-index: 10;\n}\n.progressBar .progress {\n  -ms-flex-item-align: center;\n      align-self: center;\n  width: 80%\n}\n.breadcrumb {\n  padding: 5px;\n  font-size: 14px;\n}\n.button-set .btn{\n  padding: 3px;\n  font-size: 0;\n}\n.btn svg {\n  height: 20px;\n  width: 20px;\n}\nsvg.primary {\n  fill: #007bff;\n}\nsvg.secondary {\n  fill: #6c757d;\n}\nsvg.success {\n  fill: #28a745\n}\nsvg.danger {\n  fill: #dc3545;\n}\n.btn:hover svg {\n  fill: #fff;\n}\n.folder{\n  fill: #1c9ac5;\n}\n.folder:hover {\n  fill: #16688a;\n}\n.file{\n  fill: #7f92a8;\n}\n.file:hover{\n  fill: #4b6f85;\n}\n.item {\n  cursor: pointer;\n  overflow: hidden;\n  font-size: 13px;\n  max-height: 150px;\n  text-align: center;\n}\n.item svg{\n  width: 50%;\n  max-height: 80px;\n}\na:not([href]):not([tabindex]){\n  color: inherit;\n}\n\n/*Preloader*/\n.cssload-container {\n  width: 100%;\n  text-align: center;\n}\n.cssload-speeding-wheel {\n  display: -webkit-box;\n  display: -ms-flexbox;\n  display: flex;\n  -ms-flex-item-align: center;\n      align-self: center;\n  width: 56px;\n  height: 56px;\n  margin: 0 auto;\n  border: 3px solid rgb(66,114,237);\n  border-radius: 50%;\n  border-left-color: transparent;\n  border-right-color: transparent;\n  animation: cssload-spin 400ms infinite linear;\n  -o-animation: cssload-spin 400ms infinite linear;\n  -ms-animation: cssload-spin 400ms infinite linear;\n  -webkit-animation: cssload-spin 400ms infinite linear;\n  -moz-animation: cssload-spin 400ms infinite linear;\n}\n@keyframes cssload-spin {\n100%{ -webkit-transform: rotate(360deg); transform: rotate(360deg); transform: rotate(360deg);\n}\n}\n@-webkit-keyframes cssload-spin {\n100%{ -webkit-transform: rotate(360deg); transform: rotate(360deg);\n}\n}\n\n", ""]);
 
 // exports
 
@@ -21655,11 +21655,16 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 //
 //
 //
+//
+//
+//
+//
 
 
 /* harmony default export */ __webpack_exports__["default"] = ({
   data: function data() {
     return {
+      loading: true,
       error: {
         show: false,
         message: ''
@@ -21737,9 +21742,12 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     deleteItems: function deleteItems() {
       var _this2 = this;
 
+      this.loading = true;
       __WEBPACK_IMPORTED_MODULE_0_axios___default.a.post('slfm/delete', { items: this.selection }).then(function () {
         _this2.refresh();
+        _this2.loading = false;
       }).catch(function (err) {
+        _this2.loading = false;
         _this2.handleError(err);
       });
     },
@@ -21751,12 +21759,14 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     createFolder: function createFolder() {
       var _this3 = this;
 
+      this.loading = true;
       if (this.newFolderName) {
         __WEBPACK_IMPORTED_MODULE_0_axios___default.a.put('slfm/folder', { name: this.newFolderName, path: this.path }).then(function () {
           _this3.refresh();
           _this3.$refs.createFolderPopover.$emit('close');
           _this3.newFolderName = '';
         }).catch(function (err) {
+          _this3.loading = false;
           _this3.$refs.createFolderPopover.$emit('close');
           _this3.handleError(err);
         });
@@ -21777,6 +21787,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     getItems: function getItems(page, path) {
       var _this4 = this;
 
+      this.loading = true;
       return __WEBPACK_IMPORTED_MODULE_0_axios___default.a.get('slfm/files', {
         params: {
           page: page,
@@ -21785,8 +21796,12 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
       }).then(function (res) {
         _this4.items = res.data.data;
         _this4.numberOfPages = res.data.last_page;
+        window.localStorage.setItem('slfm-path', path);
+        _this4.path = path;
+        _this4.loading = false;
       }).catch(function (err) {
         _this4.handleError(err);
+        _this4.loading = false;
       });
     },
     selectFile: function selectFile(path, name) {
@@ -21798,22 +21813,14 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
       this.changePath(path);
     },
     changePath: function changePath(path) {
-      var _this5 = this;
-
-      this.getItems(1, path).then(function () {
-        window.localStorage.setItem('slfm-path', path);
-        _this5.path = path;
-      }).catch(function (err) {
-        _this5.handleError(err);
-      });
+      this.getItems(1, path);
     },
     linkGen: function linkGen(pageNum) {}
   },
   watch: {
     currentPage: function currentPage(page) {
       this.getItems(page, this.path);
-    },
-    path: function path(_path) {}
+    }
   }
 });
 
@@ -22710,6 +22717,12 @@ var render = function() {
   return _c(
     "b-container",
     [
+      _vm.loading
+        ? _c("div", { staticClass: "cssload-container" }, [
+            _c("div", { staticClass: "cssload-speeding-wheel" })
+          ])
+        : _vm._e(),
+      _vm._v(" "),
       _vm.upload.active
         ? _c(
             "div",
@@ -22978,10 +22991,7 @@ var render = function() {
                       ])
                     ]
                   )
-                : _vm._e(),
-              _vm._v(" "),
-              item.type === "file"
-                ? _c(
+                : _c(
                     "div",
                     {
                       staticClass: "file",
@@ -22996,13 +23006,13 @@ var render = function() {
                         _c("use", {
                           attrs: {
                             "xlink:href":
-                              "/vendor/muller/filemanager/img/symbols.svg#sprite-file"
+                              "/vendor/muller/filemanager/img/symbols.svg#sprite-" +
+                              item.type
                           }
                         })
                       ])
                     ]
-                  )
-                : _vm._e(),
+                  ),
               _vm._v(" "),
               _c(
                 "b-form-checkbox",

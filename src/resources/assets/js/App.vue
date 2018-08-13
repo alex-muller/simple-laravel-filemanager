@@ -1,5 +1,9 @@
 <template>
   <b-container>
+    <!--Prloader-->
+    <div v-if="loading" class="cssload-container">
+      <div class="cssload-speeding-wheel"></div>
+    </div>
     <!--Progress-->
     <div v-if="upload.active" class="progressBar">
       <b-progress :value="upload.current" :max="upload.total" show-progress animated></b-progress>
@@ -83,9 +87,9 @@
             <use xlink:href="/vendor/muller/filemanager/img/symbols.svg#sprite-folder"></use>
           </svg>
         </div>
-        <div @click="selectFile(item.path, item.name)" v-if="item.type === 'file'" class="file">
+        <div v-else @click="selectFile(item.path, item.name)" class="file">
           <svg>
-            <use xlink:href="/vendor/muller/filemanager/img/symbols.svg#sprite-file"></use>
+            <use :xlink:href="'/vendor/muller/filemanager/img/symbols.svg#sprite-'+item.type"></use>
           </svg>
         </div>
         <b-form-checkbox v-model="selection" @click.stop="" :value="item">{{ item.name }}</b-form-checkbox>
@@ -133,6 +137,7 @@ import axios from 'axios'
 export default {
   data () {
     return {
+      loading: true,
       error: {
         show: false,
         message: ''
@@ -210,10 +215,13 @@ export default {
       }
     },
     deleteItems () {
+      this.loading = true
       axios.post('slfm/delete', {items: this.selection})
         .then(() => {
           this.refresh()
+          this.loading = false
         }).catch(err => {
+        this.loading = false
         this.handleError(err)
       })
     },
@@ -223,6 +231,7 @@ export default {
       }
     },
     createFolder() {
+      this.loading = true
       if (this.newFolderName) {
         axios.put('slfm/folder', {name: this.newFolderName, path: this.path})
         .then(()=>{
@@ -230,6 +239,7 @@ export default {
           this.$refs.createFolderPopover.$emit('close')
           this.newFolderName = ''
         }).catch(err => {
+          this.loading = false
           this.$refs.createFolderPopover.$emit('close')
           this.handleError(err)
         })
@@ -248,6 +258,7 @@ export default {
       this.selection = []
     },
     getItems (page, path) {
+      this.loading = true
       return axios.get('slfm/files', {
         params: {
           page: page,
@@ -257,9 +268,13 @@ export default {
       .then(res => {
         this.items = res.data.data
         this.numberOfPages = res.data.last_page
+        window.localStorage.setItem('slfm-path', path)
+        this.path = path
+        this.loading = false
       })
       .catch(err => {
         this.handleError(err)
+        this.loading = false
       })
     },
     selectFile(path, name) {
@@ -271,27 +286,19 @@ export default {
       this.changePath(path)
     },
     changePath (path) {
-      this.getItems(1, path).then(() => {
-        window.localStorage.setItem('slfm-path', path)
-        this.path = path
-      }).catch(err => {
-        this.handleError(err)
-      })
+      this.getItems(1, path)
     },
     linkGen(pageNum) {}
   },
   watch: {
     currentPage (page) {
       this.getItems(page, this.path)
-    },
-    path (path) {
-
     }
   }
 }
 </script>
 <style>
-  .progressBar {
+  .progressBar, .cssload-container {
     display: flex;
     justify-content: center;
     position: absolute;
@@ -301,7 +308,7 @@ export default {
     flex-wrap: nowrap;
     left: 0;
     background-color: rgba(255, 255, 255, 0.8);
-    z-index: 2;
+    z-index: 10;
   }
   .progressBar .progress {
     align-self: center;
@@ -361,5 +368,49 @@ export default {
     color: inherit;
   }
 
+  /*Preloader*/
+  .cssload-container {
+    width: 100%;
+    text-align: center;
+  }
+
+  .cssload-speeding-wheel {
+    display: flex;
+    align-self: center;
+    width: 56px;
+    height: 56px;
+    margin: 0 auto;
+    border: 3px solid rgb(66,114,237);
+    border-radius: 50%;
+    border-left-color: transparent;
+    border-right-color: transparent;
+    animation: cssload-spin 400ms infinite linear;
+    -o-animation: cssload-spin 400ms infinite linear;
+    -ms-animation: cssload-spin 400ms infinite linear;
+    -webkit-animation: cssload-spin 400ms infinite linear;
+    -moz-animation: cssload-spin 400ms infinite linear;
+  }
+
+
+
+  @keyframes cssload-spin {
+    100%{ transform: rotate(360deg); transform: rotate(360deg); }
+  }
+
+  @-o-keyframes cssload-spin {
+    100%{ -o-transform: rotate(360deg); transform: rotate(360deg); }
+  }
+
+  @-ms-keyframes cssload-spin {
+    100%{ -ms-transform: rotate(360deg); transform: rotate(360deg); }
+  }
+
+  @-webkit-keyframes cssload-spin {
+    100%{ -webkit-transform: rotate(360deg); transform: rotate(360deg); }
+  }
+
+  @-moz-keyframes cssload-spin {
+    100%{ -moz-transform: rotate(360deg); transform: rotate(360deg); }
+  }
 
 </style>

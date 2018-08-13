@@ -27,7 +27,7 @@ class FileManager
 
     public function __construct()
     {
-        $this->storage = app('filesystem');
+        $this->storage = $this->getStorage();
     }
 
     public function getItems($path, $page, $per_page)
@@ -55,7 +55,7 @@ class FileManager
     }
 
 
-    public function upload(array $files, string $path = '')
+    public function upload(array $files, $path = '')
     {
         foreach ($files as $file){
             /** @var UploadedFile $file */
@@ -94,4 +94,11 @@ class FileManager
 
         return $items;
     }
+
+    protected function getStorage()
+    {
+        $disk = config('slfm.disk') ? : 'local';
+        return app('filesystem')->disk($disk);
+    }
+
 }
