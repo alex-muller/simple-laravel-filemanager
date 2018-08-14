@@ -80,15 +80,18 @@
     </b-row>
 
     <!--Grid-->
-    <b-row>
-      <b-col class="item" v-for="item in items" :key="item.name + '-' + item.type" cols="6" sm="3" md="2">
+    <b-row class="grid">
+      <b-col class="item" v-for="item in items" :key="item.name + '-' + item.type" cols="6" sm="4" md="3">
         <div @click="openFolder(item.name)" v-if="item.type === 'folder'" class="folder">
           <svg>
             <use xlink:href="/vendor/muller/filemanager/img/symbols.svg#sprite-folder"></use>
           </svg>
         </div>
         <div v-else @click="selectFile(item.path, item.name)" class="file">
-          <svg>
+          <div v-if="item.type === 'image'"
+            class="image"
+            :style="{'background-image': 'url(/slfm/files/'+item.path + '/' + item.name + ')'}"></div>
+          <svg v-else>
             <use :xlink:href="'/vendor/muller/filemanager/img/symbols.svg#sprite-'+item.type"></use>
           </svg>
         </div>
@@ -133,6 +136,7 @@
   </b-container>
 </template>
 <script>
+import './../scss/main.scss'
 import axios from 'axios'
 export default {
   data () {
@@ -298,119 +302,5 @@ export default {
 }
 </script>
 <style>
-  .progressBar, .cssload-container {
-    display: flex;
-    justify-content: center;
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    flex-wrap: nowrap;
-    left: 0;
-    background-color: rgba(255, 255, 255, 0.8);
-    z-index: 10;
-  }
-  .progressBar .progress {
-    align-self: center;
-    width: 80%
-  }
-  .breadcrumb {
-    padding: 5px;
-    font-size: 14px;
-  }
-  .button-set .btn{
-    padding: 3px;
-    font-size: 0;
-  }
-  .btn svg {
-    height: 20px;
-    width: 20px;
-  }
-  svg.primary {
-    fill: #007bff;
-  }
-  svg.secondary {
-    fill: #6c757d;
-  }
-  svg.success {
-    fill: #28a745
-  }
-  svg.danger {
-    fill: #dc3545;
-  }
-  .btn:hover svg {
-    fill: #fff;
-  }
-  .folder{
-    fill: #1c9ac5;
-  }
-  .folder:hover {
-    fill: #16688a;
-  }
-  .file{
-    fill: #7f92a8;
-  }
-  .file:hover{
-    fill: #4b6f85;
-  }
-  .item {
-    cursor: pointer;
-    overflow: hidden;
-    font-size: 13px;
-    max-height: 150px;
-    text-align: center;
-  }
-  .item svg{
-    width: 50%;
-    max-height: 80px;
-  }
-  a:not([href]):not([tabindex]){
-    color: inherit;
-  }
-
-  /*Preloader*/
-  .cssload-container {
-    width: 100%;
-    text-align: center;
-  }
-
-  .cssload-speeding-wheel {
-    display: flex;
-    align-self: center;
-    width: 56px;
-    height: 56px;
-    margin: 0 auto;
-    border: 3px solid rgb(66,114,237);
-    border-radius: 50%;
-    border-left-color: transparent;
-    border-right-color: transparent;
-    animation: cssload-spin 400ms infinite linear;
-    -o-animation: cssload-spin 400ms infinite linear;
-    -ms-animation: cssload-spin 400ms infinite linear;
-    -webkit-animation: cssload-spin 400ms infinite linear;
-    -moz-animation: cssload-spin 400ms infinite linear;
-  }
-
-
-
-  @keyframes cssload-spin {
-    100%{ transform: rotate(360deg); transform: rotate(360deg); }
-  }
-
-  @-o-keyframes cssload-spin {
-    100%{ -o-transform: rotate(360deg); transform: rotate(360deg); }
-  }
-
-  @-ms-keyframes cssload-spin {
-    100%{ -ms-transform: rotate(360deg); transform: rotate(360deg); }
-  }
-
-  @-webkit-keyframes cssload-spin {
-    100%{ -webkit-transform: rotate(360deg); transform: rotate(360deg); }
-  }
-
-  @-moz-keyframes cssload-spin {
-    100%{ -moz-transform: rotate(360deg); transform: rotate(360deg); }
-  }
 
 </style>

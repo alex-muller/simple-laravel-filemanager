@@ -8,6 +8,7 @@ use Illuminate\Filesystem\FilesystemManager;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Muller\Filemanager\Exceptions\FileManagerException;
+use Illuminate\Http\Response;
 
 
 /**
@@ -78,6 +79,20 @@ class FileManager
             $result = $this->storage->$method($path);
         }
         return $result;
+    }
+
+    public function getFile($path)
+    {
+        if (!$this->storage->exists($path)) {
+            abort(404);
+        }
+        $file = $this->storage->get($path);
+        $type = mime_content_type(storage_path('app/'.$path));
+
+        $response = \Response::make($file);
+        $response->header('Content-Type', $type);
+
+        return $response;
     }
 
     protected function makeItems($path, $type)

@@ -3,7 +3,7 @@ const SVGSpritemapPlugin = require('svg-spritemap-webpack-plugin');
 const svgo = require('svgo')
 
 mix.js('src/resources/assets/js/main.js', 'public/muller/filemanager/js')
-  .sass('src/resources/assets/scss/main.scss', 'public/muller/filemanager/css');
+  .sass('src/resources/assets/scss/main.scss', 'public/muller/filemanager/css').sourceMaps();
 
 mix.webpackConfig({
   plugins: [

@@ -2,41 +2,53 @@
 
 namespace Muller\Filemanager\Http\Controllers;
 use Illuminate\Http\Request;
-use Muller\Filemanager\AbstractFile;
 use Muller\Filemanager\Factory;
 use Muller\Filemanager\FileManager;
 
 class FileController
 {
-    public function index(Request $request, FileManager $manager)
+    protected $manager;
+
+    public function __construct()
+    {
+        $this->manager = new FileManager();
+    }
+
+    public function index(Request $request)
     {
         $page = $request->get('page') ? : 1;
         $path = $request->get('path');
-        $items = $manager->getItems($path, $page, 12);
+        $items = $this->manager->getItems($path, $page, 12);
 
         return response()->json($items);
     }
 
-    public function createFolder(Request $request, FileManager $manager)
+    public function createFolder(Request $request)
     {
         $request->validate([
             'name' => 'required|max:255'
         ]);
 
-        $manager->createFolder($request->input('name'), $request->input('path'));
+        $this->manager->createFolder($request->input('name'), $request->input('path'));
     }
 
-    public function delete(Request $request, FileManager $manager)
+    public function delete(Request $request)
     {
         $request->validate([
             'items' => 'required'
             ]);
 
-        $manager->delete($request->post('items'));
+        $this->manager->delete($request->post('items'));
 
     }
-    public function upload(Request $request, FileManager $manager)
+    public function upload(Request $request)
     {
-        $manager->upload($request->file('files'), $request->input('path'));
+        $this->manager->upload($request->file('files'), $request->input('path'));
     }
+
+    public function getFile($path)
+    {
+        return $this->manager->getFile($path);
+    }
+
 }
