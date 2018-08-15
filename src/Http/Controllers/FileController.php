@@ -18,7 +18,8 @@ class FileController
     {
         $page = $request->get('page') ? : 1;
         $path = $request->get('path');
-        $items = $this->manager->getItems($path, $page, 12);
+        $search = $request->get('search');
+        $items = $this->manager->getItems($path, $page, $search, 12);
 
         return response()->json($items);
     }

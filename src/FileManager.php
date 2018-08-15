@@ -31,10 +31,10 @@ class FileManager
         $this->storage = $this->getStorage();
     }
 
-    public function getItems($path, $page, $per_page)
+    public function getItems($path, $page, $search, $per_page)
     {
-        $items = $this->makeItems($path, 'folder');
-        $items = array_merge($items, $this->makeItems($path, 'file'));
+        $items = $this->makeItems($path, $search, 'folder');
+        $items = array_merge($items, $this->makeItems($path, $search, 'file'));
         $total = count($items);
         $offset = $per_page * ($page - 1);
         $items = array_slice($items, $offset, $per_page);
@@ -95,7 +95,7 @@ class FileManager
         return $response;
     }
 
-    protected function makeItems($path, $type)
+    protected function makeItems($path, $search, $type)
     {
         $items = [];
         try {
@@ -105,6 +105,12 @@ class FileManager
         }
         foreach ($_items as $_item) {
             $items[] = new $this->types[$type]($_item, $path);
+        }
+
+        if ($search) {
+            $items = array_filter($items, function ($item) use ($search) {
+               return strpos($item->name, $search) !== false;
+            });
         }
 
         return $items;

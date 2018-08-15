@@ -70,10 +70,9 @@
 
       <!--Search-->
       <b-col sm="8">
-        <b-input-group size="sm" prepend="Serch">
-          <b-form-input></b-form-input>
+        <b-input-group size="sm" prepend="Search">
+          <b-form-input v-model="searchQuery"></b-form-input>
           <b-input-group-append>
-            <b-btn variant="info">Go</b-btn>
           </b-input-group-append>
         </b-input-group>
       </b-col>
@@ -142,6 +141,8 @@ export default {
   data () {
     return {
       loading: true,
+      searchTimeout: null,
+      searchQuery: '',
       error: {
         show: false,
         message: ''
@@ -265,6 +266,7 @@ export default {
       this.loading = true
       return axios.get('slfm/files', {
         params: {
+          search: this.searchQuery,
           page: page,
           path: path
         }
@@ -297,6 +299,12 @@ export default {
   watch: {
     currentPage (page) {
       this.getItems(page, this.path)
+    },
+    searchQuery () {
+      clearTimeout(this.searchTimeout)
+      this.searchTimeout = setTimeout(() => {
+        this.refresh()
+      }, 500)
     }
   }
 }
