@@ -89,7 +89,7 @@
         <div v-else @click="selectFile(item.path, item.name)" class="file">
           <div v-if="item.type === 'image'"
             class="image"
-            :style="{'background-image': 'url(/slfm/files/'+item.path + '/' + item.name + ')'}"></div>
+            :style="{'background-image': 'url(' + getImageUrl(item.path, item.name) + ')'}"></div>
           <svg v-else>
             <use :xlink:href="'/vendor/muller/filemanager/img/symbols.svg#sprite-'+item.type"></use>
           </svg>
@@ -192,6 +192,13 @@ export default {
     }
   },
   methods: {
+    getImageUrl (path, name) {
+      let url = '/slfm/files/'
+      if (path) {
+        url += path + '/'
+      }
+      return url + name;
+    },
     processFiles () {
       let files = this.$refs.files.files
       if(files.length) {
@@ -284,8 +291,9 @@ export default {
       })
     },
     selectFile(path, name) {
-      path = path ? path + '/' + name : name
-      window.callback(path)
+      let _path = path ? path + '/' + name : name
+      let url = this.getImageUrl(path, name)
+      window.callback(_path, url)
     },
     openFolder(name) {
       let path = this.path ? this.path + '/' + name : name
